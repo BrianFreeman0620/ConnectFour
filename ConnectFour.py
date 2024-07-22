@@ -106,7 +106,7 @@ class ConnectFour:
                     return True
      
     def scoreCalc(self, player):
-        scoreDict = {"Win" : 0, "Lose" : 0, "Win in 1" : 0, "Lose in 1" : 8}
+        scoreDict = {"Win" : 0, "Lose" : 0, "Win in 1" : 0, "Lose in 1" : 63, "Win in 2" : 0, "Lose in 2" : 63}
         if self.isWinning(player):
             scoreDict["Win"] = 1
         else:
@@ -124,16 +124,30 @@ class ConnectFour:
                         if self.playMove(possibleMove2, player - 1):
                             if self.isWinning(player - 1):
                                 scoreDict["Lose in 1"] -= 1
+                            else:
+                                for possibleMove3 in range(8):
+                                    if self.playMove(possibleMove3, player):
+                                        if self.isWinning(player):
+                                            scoreDict["Win in 2"] += 1
+                                        else:
+                                            for possibleMove4 in range(8):
+                                                if self.playMove(possibleMove4, player - 1):
+                                                    if self.isWinning(player - 1):
+                                                        scoreDict["Lose in 2"] -= 1
+                                                    self.board[self.playable[possibleMove4] + 1][possibleMove4] = " "
+                                                    self.playable[possibleMove4] += 1
+                                        self.board[self.playable[possibleMove3] + 1][possibleMove3] = " "
+                                        self.playable[possibleMove3] += 1
                             self.board[self.playable[possibleMove2] + 1][possibleMove2] = " "
                             self.playable[possibleMove2] += 1
                 self.board[self.playable[possibleMove] + 1][possibleMove] = " "
                 self.playable[possibleMove] += 1
-        score = scoreDict["Win"] * (64 ** 4) + scoreDict["Lose"] * (64 ** 3) + scoreDict["Win in 1"] * (64 ** 2) + scoreDict["Lose in 1"] * (64 ** 1)
+        score = scoreDict["Win"] * (64 ** 6) + scoreDict["Lose"] * (64 ** 5) + scoreDict["Win in 1"] * (64 ** 4) + scoreDict["Lose in 1"] * (64 ** 3) + scoreDict["Win in 2"] * (64 ** 2) + scoreDict["Lose in 2"] * (64 ** 1)
         return score
     
     def distanceFromCenter(self, column):
         row = self.playable[column]
-        return ((row - 7) ** 2 + (column - 3.5) ** 2) ** (1/2)
+        return ((row - 3.5) ** 2 + (column - 3.5) ** 2) ** (1/2)
     
     def playGame(self):
         print("Welcome to Connect 4!")
@@ -151,7 +165,7 @@ class ConnectFour:
             else:
                 legalMove = False
                 while not legalMove:
-                    bestMoveValue = 64 ** 5
+                    bestMoveValue = 64 ** 7
                     bestMove = 0
                     for possibleMove in range(8):
                         if self.playMove(possibleMove, playerNum - 1):
