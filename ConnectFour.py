@@ -105,10 +105,11 @@ class ConnectFour:
                 if self.isFourColumn(rowColumn, player):
                     return True
      
-    def scoreCalc(self, player):
-        scoreDict = {"Win" : 0, "Lose" : 0, "Win in 1" : 0, "Lose in 1" : 63, "Win in 2" : 0, "Lose in 2" : 63}
+    def scoreCalc(self, player, verbose = False):
+        scoreDict = {"Win" : 0, "Lose" : 0, "Win in 1" : 0, "Lose in 1" : 32767, "Win in 2" : 0, "Lose in 2" : 32767, "Win in 3" : 0, "Lose in 3" : 32767}
         if self.isWinning(player):
             scoreDict["Win"] = 1
+            return scoreDict["Win"] * (262144 ** 7)
         else:
             scoreDict["Win"] = 0
         if self.isWinning(player - 1):
@@ -134,15 +135,34 @@ class ConnectFour:
                                                 if self.playMove(possibleMove4, player - 1):
                                                     if self.isWinning(player - 1):
                                                         scoreDict["Lose in 2"] -= 1
+                                                    else:
+                                                        for possibleMove5 in range(8):
+                                                            if self.playMove(possibleMove5, player):
+                                                                if self.isWinning(player):
+                                                                    scoreDict["Win in 3"] += 1
+                                                                '''else:
+                                                                    for possibleMove6 in range(8):
+                                                                        if self.playMove(possibleMove6, player - 1):
+                                                                            if self.isWinning(player - 1):
+                                                                                scoreDict["Lose in 3"] -= 1
+                                                                            self.board[self.playable[possibleMove6] + 1][possibleMove6] = " "
+                                                                            self.playable[possibleMove6] += 1'''
+                                                                self.board[self.playable[possibleMove5] + 1][possibleMove5] = " "
+                                                                self.playable[possibleMove5] += 1
                                                     self.board[self.playable[possibleMove4] + 1][possibleMove4] = " "
                                                     self.playable[possibleMove4] += 1
                                         self.board[self.playable[possibleMove3] + 1][possibleMove3] = " "
                                         self.playable[possibleMove3] += 1
+                                    if possibleMove3 != 7 and verbose:
+                                        print("{0} % done!".format(100 * ((possibleMove)/8 + ((possibleMove2)/64) + ((possibleMove3 + 1)/512))))    
                             self.board[self.playable[possibleMove2] + 1][possibleMove2] = " "
                             self.playable[possibleMove2] += 1
+                        if possibleMove2 != 7 and verbose:
+                            print("{0} % done!".format(100 * ((possibleMove)/8 + ((possibleMove2 + 1)/64))))
                 self.board[self.playable[possibleMove] + 1][possibleMove] = " "
                 self.playable[possibleMove] += 1
-        score = scoreDict["Win"] * (64 ** 6) + scoreDict["Lose"] * (64 ** 5) + scoreDict["Win in 1"] * (64 ** 4) + scoreDict["Lose in 1"] * (64 ** 3) + scoreDict["Win in 2"] * (64 ** 2) + scoreDict["Lose in 2"] * (64 ** 1)
+            print("{0} % done!".format(100 * (1+possibleMove)/8))
+        score = scoreDict["Win"] * (262144 ** 7) + scoreDict["Lose"] * (262144 ** 6) + scoreDict["Win in 1"] * (262144 ** 5) + scoreDict["Lose in 1"] * (262144 ** 4) + scoreDict["Win in 2"] * (262144 ** 3) + scoreDict["Lose in 2"] * (262144 ** 2) + scoreDict["Win in 3"] * (262144 ** 1) + scoreDict["Lose in 3"] * (262144 ** 0)
         return score
     
     def distanceFromCenter(self, column):
@@ -165,21 +185,67 @@ class ConnectFour:
             else:
                 legalMove = False
                 while not legalMove:
-                    bestMoveValue = 64 ** 7
+                    bestMoveValue = 262144 ** 8
+                    bestDistance = 64
                     bestMove = 0
                     for possibleMove in range(8):
                         if self.playMove(possibleMove, playerNum - 1):
-                            if bestMoveValue > self.scoreCalc(playerNum) + self.distanceFromCenter(possibleMove):
-                                bestMoveValue = self.scoreCalc(playerNum) + self.distanceFromCenter(possibleMove)
+                            currentValue = self.scoreCalc(playerNum, True)
+                            print("Value of {0} is {1}".format(str(possibleMove), str(currentValue)))
+                            if bestMoveValue > currentValue:
+                                bestMoveValue = currentValue
                                 bestMove = possibleMove
+                                bestDistance = self.distanceFromCenter(possibleMove)
+                            elif bestMoveValue == currentValue:
+                                if bestDistance > self.distanceFromCenter(possibleMove):
+                                    bestMoveValue = currentValue
+                                    bestMove = possibleMove
+                                    bestDistance = self.distanceFromCenter(possibleMove)
                             self.board[self.playable[possibleMove] + 1][possibleMove] = " "
                             self.playable[possibleMove] += 1
                     legalMove = self.playMove(bestMove, playerNum - 1)
+                    print("The computer played {0}!".format(bestMove))
         print(self)
         if parity % 2 == 2 - playerNum:
             print("You win!")
         else:
             print("You lose...")
+    
+    def computerGame(self):
+        parity = 0
+        while not self.isWinning(1) and not self.isWinning(2):
+            parity += 1
+            if parity % 2 == 1:
+                playerNum = 1
+            else:
+                playerNum = 2
+            legalMove = False
+            while not legalMove:
+                bestMoveValue = 262144 ** 8
+                bestDistance = 64
+                bestMove = 0
+                for possibleMove in range(8):
+                    if self.playMove(possibleMove, playerNum):
+                        currentValue = self.scoreCalc(playerNum - 1)
+                        print("Value of {0} is {1}".format(str(possibleMove), str(currentValue)))
+                        if bestMoveValue > currentValue:
+                            bestMoveValue = currentValue
+                            bestMove = possibleMove
+                            bestDistance = self.distanceFromCenter(possibleMove)
+                        elif bestMoveValue == currentValue:
+                            if bestDistance > self.distanceFromCenter(possibleMove):
+                                bestMoveValue = currentValue
+                                bestMove = possibleMove
+                                bestDistance = self.distanceFromCenter(possibleMove)
+                        self.board[self.playable[possibleMove] + 1][possibleMove] = " "
+                        self.playable[possibleMove] += 1
+                legalMove = self.playMove(bestMove, playerNum)
+                print("The computer player {0} played {1}!".format(playerNum, bestMove))
+                print(self)
+        if parity % 2 == 1:
+            print("Computer player 1 won!")
+        else:
+            print("Computer player 2 won!")
             
 conFour = ConnectFour()
 conFour.playGame()
